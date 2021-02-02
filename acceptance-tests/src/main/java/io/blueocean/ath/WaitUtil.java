@@ -3,8 +3,10 @@ package io.blueocean.ath;
 import com.google.common.base.Function;
 import org.apache.log4j.Logger;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.NotFoundException;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
@@ -13,12 +15,13 @@ import org.openqa.selenium.support.ui.FluentWait;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 
 @Singleton
 public class WaitUtil {
     public static int DEFAULT_TIMEOUT = Integer.getInteger("webDriverDefaultTimeout", 20000);
+    public static String DEFAULT_ERROR_MESSAGE = "Error while waiting for something";
     public static final int RETRY_COUNT = 10;
 
     private Logger logger = Logger.getLogger(WaitUtil.class);
@@ -32,9 +35,9 @@ public class WaitUtil {
 
     public <T> T until(Function<WebDriver, T> function, long timeoutInMS, String errorMessage) {
         try {
-            return new FluentWait<WebDriver>(driver)
-                .pollingEvery(100, TimeUnit.MILLISECONDS)
-                .withTimeout(timeoutInMS, TimeUnit.MILLISECONDS)
+            return new FluentWait<>(driver)
+                .pollingEvery(Duration.ofMillis(100))
+                .withTimeout(Duration.ofMillis(timeoutInMS))
                 .ignoring(NoSuchElementException.class)
                 .until((WebDriver driver) -> function.apply(driver));
         } catch(Throwable t) {
@@ -43,14 +46,14 @@ public class WaitUtil {
     }
 
     public <T> T until(Function<WebDriver, T> function, long timeoutInMS) {
-        return until(function, timeoutInMS, "Error while waiting for something");
+        return until(function, timeoutInMS, DEFAULT_ERROR_MESSAGE);
     }
     public <T> T until(Function<WebDriver, T> function) {
-        return until(function, DEFAULT_TIMEOUT);
+        return until(function, DEFAULT_TIMEOUT, DEFAULT_ERROR_MESSAGE);
     }
 
     public <T> T until(Function<WebDriver, T> function, String errorMessage) {
-        return until(function, DEFAULT_TIMEOUT);
+        return until(function, DEFAULT_TIMEOUT, errorMessage);
     }
 
     public WebElement until(WebElement element) {
@@ -125,6 +128,9 @@ public class WaitUtil {
                     logger.info(String.format("Retry click successful on attempt " + i + " for %s", by.toString()));
                 }
                 return;
+            } catch (StaleElementReferenceException ex) {
+                // item went away while we were trying to click (like auto complete)
+                // so try again
             } catch (WebDriverException ex) {
                 if (ex.getMessage().contains("is not clickable at point")) {
                     logger.warn(String.format("%s not clickable on attempt " + i + ", will sleep and retry ", by.toString()));
@@ -202,6 +208,17 @@ public class WaitUtil {
         } catch (InterruptedException ex) {
             logger.info("Exception thrown by tinySleep");
         }
+    }
+
+    /**
+     * Wait until the SSE is fully connected so events will propagate properly
+     */
+    public void untilSSEReady() {
+        // make sure the variable is defined
+        until( driver -> ((JavascriptExecutor)driver).executeScript("return typeof window.JenkinsBlueOceanCoreJSSSEConnected").equals("boolean"));
+        // then wait until sse is ready
+        until( driver -> ((JavascriptExecutor)driver).executeScript("return window.JenkinsBlueOceanCoreJSSSEConnected").equals(true));
+        logger.info("SSE connected");
     }
 
 }

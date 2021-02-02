@@ -31,7 +31,7 @@ export namespace Fetch {
         onSuccess?: <A, B>(success: A) => B;
         onError?: <A, B>(error: A) => B;
         fetchOptions?: RequestInit;
-        disableCapabilites?: boolean;
+        disableCapabilities?: boolean;
         disableLoadingIndicator?: boolean;
         ignoreRefreshHeader?: boolean;
     }
@@ -305,9 +305,15 @@ export class Fetch {
      * @param {Object} [options.fetchOptions] - Optional isomorphic-fetch options.
      * @returns JSON body.
      */
-    static fetchJSON(url, { onSuccess, onError, fetchOptions, disableCapabilites, disableLoadingIndicator, ignoreRefreshHeader }: Fetch.FetchOpts = {}) {
+    static fetchJSON(url, { onSuccess, onError, fetchOptions, disableCapabilities, disableLoadingIndicator, ignoreRefreshHeader }: Fetch.FetchOpts = {}) {
         const fixedUrl = FetchFunctions.prefixUrl(url);
         let future;
+        const crumbHeaderName = UrlConfig.getCrumbHeaderName();
+
+        if (crumbHeaderName && fetchOptions && fetchOptions.headers) {
+            fetchOptions.headers[crumbHeaderName] = UrlConfig.getCrumbToken();
+        }
+
         if (!AppConfig.isJWTEnabled()) {
             future = FetchFunctions.rawFetchJSON(fixedUrl, { onSuccess, onError, fetchOptions, disableLoadingIndicator, ignoreRefreshHeader });
         } else {
@@ -320,7 +326,7 @@ export class Fetch {
             );
         }
 
-        if (!disableCapabilites) {
+        if (!disableCapabilities) {
             return future.then(data => capabilityAugmenter.augmentCapabilities(Utils.clone(data)));
         }
 
@@ -341,6 +347,11 @@ export class Fetch {
      */
     static fetch(url, { onSuccess, onError, fetchOptions, disableLoadingIndicator, ignoreRefreshHeader }: Fetch.FetchOpts = {}) {
         const fixedUrl = FetchFunctions.prefixUrl(url);
+        const crumbHeaderName = UrlConfig.getCrumbHeaderName();
+
+        if (crumbHeaderName && fetchOptions && fetchOptions.headers) {
+            fetchOptions.headers[crumbHeaderName] = UrlConfig.getCrumbToken();
+        }
 
         if (!AppConfig.isJWTEnabled()) {
             return FetchFunctions.rawFetch(fixedUrl, { onSuccess, onError, fetchOptions, disableLoadingIndicator, ignoreRefreshHeader });

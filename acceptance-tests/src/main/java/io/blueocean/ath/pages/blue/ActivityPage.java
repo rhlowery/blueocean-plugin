@@ -106,7 +106,7 @@ public class ActivityPage {
     }
 
     public WebElement getRunRowForBranch(String branchName) {
-        return wait.until(getSelectorForBranch(branchName));
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(getSelectorForBranch(branchName)));
     }
 
     public By getSelectorForRowCells() {
@@ -132,7 +132,11 @@ public class ActivityPage {
     }
 
     public void checkBasicDomElements() {
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("article.activity")));
+        wait.retryAction("check that we are on the activity page", 3, driver -> {
+            wait.until(By.cssSelector("article.activity"), 5000);
+            logger.info("checkBasicDomElements: Activity tab found");
+            return true;
+        });
     }
 
     public void checkFavoriteStatus(boolean isFavorited) {

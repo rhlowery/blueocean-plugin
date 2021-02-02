@@ -1,8 +1,8 @@
 /**
  * Created by cmeyers on 8/29/16.
  */
-import { Fetch } from '../fetch';
 import { UrlConfig } from '../urlconfig';
+import { Fetch } from '../fetch';
 import { Utils } from '../utils';
 
 export class RunApi {
@@ -48,5 +48,23 @@ export class RunApi {
         };
 
         return Fetch.fetchJSON(replayPipelineUrl, { fetchOptions });
+    }
+
+    restartStage(run, nodeId) {
+        const path = UrlConfig.getJenkinsRootURL();
+        const runUrl = run._links.self.href;
+        const restartStageUrl = Utils.cleanSlashes(`${path}/${runUrl}/nodes/${nodeId}/restart`);
+
+        const fetchOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                restart: 'true',
+            }),
+        };
+
+        return Fetch.fetchJSON(restartStageUrl, { fetchOptions });
     }
 }

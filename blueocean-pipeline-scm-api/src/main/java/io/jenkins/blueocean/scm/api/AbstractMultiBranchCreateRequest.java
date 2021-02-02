@@ -76,6 +76,7 @@ public abstract class AbstractMultiBranchCreateRequest extends AbstractPipelineC
         assignCredentialToProject(scmConfig, project);
         SCMSource source = createSource(project, scmConfig).withId("blueocean");
         project.setSourcesList(ImmutableList.of(new BranchSource(source)));
+        source.afterSave();
         project.save();
         final boolean hasJenkinsfile = repoHasJenkinsFile(source);
         if(!hasJenkinsfile){
@@ -120,14 +121,14 @@ public abstract class AbstractMultiBranchCreateRequest extends AbstractPipelineC
         @Override
         public boolean isHead(@Nonnull Probe probe, @Nonnull TaskListener listener) throws IOException {
             SCMProbeStat stat = probe.stat("Jenkinsfile");
-            boolean foundJekinsFile =  stat.getType() != SCMFile.Type.NONEXISTENT && stat.getType() != SCMFile.Type.DIRECTORY;
-            if(foundJekinsFile && !jenkinsFileFound.get()) {
+            boolean foundJenkinsFile =  stat.getType() != SCMFile.Type.NONEXISTENT && stat.getType() != SCMFile.Type.DIRECTORY;
+            if(foundJenkinsFile && !jenkinsFileFound.get()) {
                 jenkinsFileFound.set(true);
             }
-            return foundJekinsFile;
+            return foundJenkinsFile;
         }
 
-        public boolean isJekinsfileFound() {
+        public boolean isJenkinsfileFound() {
             return jenkinsFileFound.get();
         }
     }
@@ -149,7 +150,7 @@ public abstract class AbstractMultiBranchCreateRequest extends AbstractPipelineC
                 @Override
                 public boolean isObserving() {
                     //if jenkinsfile is found stop observing
-                    return !criteria.isJekinsfileFound();
+                    return !criteria.isJenkinsfileFound();
 
                 }
             }, TaskListener.NULL);
@@ -157,7 +158,7 @@ public abstract class AbstractMultiBranchCreateRequest extends AbstractPipelineC
             logger.warn("Error detecting Jenkinsfile: "+e.getMessage(), e);
         }
 
-        return criteria.isJekinsfileFound();
+        return criteria.isJenkinsfileFound();
 
     }
 
@@ -251,6 +252,7 @@ public abstract class AbstractMultiBranchCreateRequest extends AbstractPipelineC
         // Validate that name matches rules
         try {
             Jenkins.getInstance().getProjectNamingStrategy().checkName(getName());
+            Jenkins.checkGoodName(name);
         }catch (Failure f){
             errors.add(new Error(ERROR_FIELD_SCM_CONFIG_NAME, Error.ErrorCodes.INVALID.toString(),  getName() + " in not a valid name"));
         }

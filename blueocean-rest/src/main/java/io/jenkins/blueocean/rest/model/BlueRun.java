@@ -87,6 +87,7 @@ public abstract class BlueRun extends Resource implements BlueItemRun {
      */
     @Exported(inline = true)
     @Nonnull
+    @Navigable
     public abstract Container<BlueChangeSetEntry> getChangeSet();
 
     /**
@@ -207,8 +208,11 @@ public abstract class BlueRun extends Resource implements BlueItemRun {
     /**
      * @return Gives the test summary for this run
      */
-    @Exported(name = TEST_SUMMARY, inline = true, skipNull = true)
+    @Deprecated
     public abstract BlueTestSummary getTestSummary();
+
+    @Navigable
+    public abstract BlueTestSummary getBlueTestSummary();
 
     /**
      * @return Instance of stapler aware instance that can do the following:
