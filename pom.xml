@@ -45,7 +45,7 @@
     <hpi.dependencyResolution>runtime</hpi.dependencyResolution>
     <access-modifier-checker.failOnError>true</access-modifier-checker.failOnError>
     <workflow-support.version>3.3</workflow-support.version>
-    <pipeline-model-definition.version>1.6.0</pipeline-model-definition.version>
+    <pipeline-model-definition.version>1.8.0</pipeline-model-definition.version>
     <scm-api-plugin.version>2.6.3</scm-api-plugin.version>
   </properties>
 
